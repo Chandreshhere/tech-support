@@ -1,0 +1,24 @@
+{
+  "name": "kraken-core",
+  "version": "1.0.0",
+  "description": "OS-interface logic for kraken-assist (exec, files, screenshot, input, capture)",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./safety": "./safety.js",
+    "./system": "./system.js",
+    "./exec": "./exec.js",
+    "./files": "./files.js",
+    "./screenshot": "./screenshot.js",
+    "./input": "./input.js",
+    "./capture": "./capture.js",
+    "./feedback": "./feedback.js",
+    "./errors": "./errors.js"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "screenshot-desktop": "^1.15.0",
+    "uiohook-napi": "^1.5.5"
+  }
+}

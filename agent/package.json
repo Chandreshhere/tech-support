@@ -1,0 +1,21 @@
+{
+  "name": "kraken-assist-agent",
+  "version": "1.0.0",
+  "description": "AI agent with RAG for autonomous UI navigation via kraken-core",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "ingest": "node index.js --ingest"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.0.0",
+    "@langchain/core": "^1.1.36",
+    "@langchain/google-genai": "^2.1.26",
+    "@langchain/groq": "^1.1.5",
+    "@langchain/openai": "^1.4.4",
+    "chromadb": "^1.9.2",
+    "dotenv": "^16.4.5",
+    "kraken-core": "file:../core"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(fuser -k 3000/tcp)",
+      "Bash(node index.js)",
+      "mcp__kraken-assist__take_screenshot",
+      "mcp__kraken-assist__press_keys",
+      "mcp__kraken-assist__*",
+      "Bash(npx vite:*)",
+      "WebFetch(domain:console.groq.com)"
+    ]
+  }
+}
