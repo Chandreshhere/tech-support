@@ -1,6 +1,6 @@
 {
   "llm": {
-    "activeProvider": "openrouter",
+    "activeProvider": "claude",
     "gemini": {
       "activeModel": "gemini-2.5-flash",
       "activeKeyId": "bf1621fb-4bdb-45a5-becc-d09a73306ed3"
@@ -12,6 +12,10 @@
     "openrouter": {
       "activeKeyId": "62fb971e-423f-491c-9553-4311f497e6d3",
       "activeModel": "qwen/qwen2.5-vl-72b-instruct"
+    },
+    "claude": {
+      "activeModel": "claude-haiku-4-5-20251001",
+      "activeKeyId": "c2ac2772-0884-479d-9a20-3e21b9b1401b"
     }
   },
   "chromadb": {

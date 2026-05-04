@@ -394,7 +394,7 @@ app.delete('/keys/:id', (req, res) => {
   if (!ok) return res.status(404).json({ error: 'key not found' });
   // Also clear any references in config.llm.*.activeKeyId that pointed to this key
   const cfg = getAppConfig();
-  for (const provider of ['gemini', 'groq', 'openrouter']) {
+  for (const provider of ['gemini', 'groq', 'openrouter', 'claude']) {
     if (cfg.llm?.[provider]?.activeKeyId === req.params.id) {
       setConfigPath(`llm.${provider}.activeKeyId`, null);
     }
@@ -592,7 +592,7 @@ function setApiKeysFromConfig() {
   const allKeys = listKeys();
 
   // Clear any previous pushes so stale keys aren't left in env
-  const PROVIDERS = ['gemini', 'groq', 'openrouter'];
+  const PROVIDERS = ['gemini', 'groq', 'openrouter', 'claude'];
   for (const envKey of Object.keys(process.env)) {
     for (const p of PROVIDERS) {
       if (envKey.startsWith(`${p.toUpperCase()}_API_KEY_`)) {
@@ -623,6 +623,7 @@ function setApiKeysFromConfig() {
   if (cfg.llm?.gemini?.activeModel) process.env.GEMINI_MODEL = cfg.llm.gemini.activeModel;
   if (cfg.llm?.groq?.activeModel) process.env.GROQ_MODEL = cfg.llm.groq.activeModel;
   if (cfg.llm?.openrouter?.activeModel) process.env.OPENROUTER_MODEL = cfg.llm.openrouter.activeModel;
+  if (cfg.llm?.claude?.activeModel) process.env.CLAUDE_MODEL = cfg.llm.claude.activeModel;
   if (cfg.chromadb?.url) process.env.CHROMA_URL = cfg.chromadb.url;
   if (cfg.embeddings?.model) process.env.EMBEDDING_MODEL = cfg.embeddings.model;
 

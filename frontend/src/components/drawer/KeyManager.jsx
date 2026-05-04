@@ -1,56 +1,52 @@
 import { useState } from 'react';
 import {
   RiKey2Line, RiAddLine, RiDeleteBinLine, RiPencilLine,
-  RiCheckLine, RiCloseLine, RiLoader4Line,
+  RiCheckLine, RiLoader4Line,
 } from 'react-icons/ri';
 import api from '../../services/api.js';
 
 const PROVIDER_LABELS = {
-  gemini: 'Gemini',
-  groq: 'Groq',
-  openrouter: 'OpenRouter',
-  openai: 'OpenAI',
-  anthropic: 'Anthropic',
-  custom: 'Custom',
+  gemini: 'GEMINI',
+  groq: 'GROQ',
+  openrouter: 'OPENROUTER',
+  claude: 'CLAUDE',
 };
 
 function KeyRow({ apiKey, activeAssignments, onEdit, onDelete }) {
-  // activeAssignments: array of slot names this key is currently active for
-  // (e.g. ['llm.gemini'] if config.llm.gemini.activeKeyId === apiKey.id)
   const usedBy = activeAssignments.length;
 
   return (
-    <div className="group flex items-center gap-2 px-2 py-1.5 rounded bg-zinc-800/40 hover:bg-zinc-800/70">
-      <RiKey2Line size={12} className="text-slate-500 shrink-0" />
+    <div className="group flex items-center gap-2 px-2 py-1.5 bg-black border border-zinc-900 hover:border-emerald-500/40 transition-colors">
+      <RiKey2Line size={11} className="text-emerald-500/70 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-[12px] text-slate-200 truncate">{apiKey.name}</span>
-          <span className="shrink-0 px-1 py-[1px] text-[9px] font-semibold uppercase rounded bg-zinc-700 text-slate-400">
-            {PROVIDER_LABELS[apiKey.provider] || apiKey.provider}
+          <span className="font-mono text-[11px] text-slate-200 truncate">{apiKey.name}</span>
+          <span className="shrink-0 px-1 py-[1px] font-mono text-[8px] tracking-[0.25em] bg-zinc-900 text-slate-400 border border-zinc-800">
+            {PROVIDER_LABELS[apiKey.provider] || apiKey.provider.toUpperCase()}
           </span>
           {usedBy > 0 && (
-            <span className="shrink-0 px-1 py-[1px] text-[9px] font-semibold uppercase rounded bg-emerald-500/15 text-emerald-400">
-              In use
+            <span className="shrink-0 px-1 py-[1px] font-mono text-[8px] tracking-[0.25em] border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
+              IN_USE
             </span>
           )}
         </div>
-        <div className="text-[10px] text-slate-600 font-mono">{apiKey.maskedSecret}</div>
+        <div className="font-mono text-[9px] text-slate-600 mt-0.5">{apiKey.maskedSecret}</div>
         {usedBy > 0 && (
-          <div className="text-[9px] text-slate-600 mt-0.5">
-            Used by: {activeAssignments.join(', ')}
+          <div className="font-mono text-[8px] text-slate-600 mt-0.5 tracking-wider">
+            → {activeAssignments.join(', ')}
           </div>
         )}
       </div>
       <button
         onClick={() => onEdit(apiKey)}
-        className="p-1 rounded text-slate-500 hover:bg-zinc-700 hover:text-slate-300 opacity-0 group-hover:opacity-100"
+        className="p-1 text-slate-500 hover:text-emerald-400 opacity-0 group-hover:opacity-100 transition-colors"
         title="Edit"
       >
         <RiPencilLine size={11} />
       </button>
       <button
         onClick={() => onDelete(apiKey)}
-        className="p-1 rounded text-slate-500 hover:bg-red-500/10 hover:text-red-400 opacity-0 group-hover:opacity-100"
+        className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-colors"
         title="Delete"
       >
         <RiDeleteBinLine size={11} />
@@ -74,7 +70,7 @@ function KeyForm({ initial, onSave, onCancel }) {
       await onSave({
         name: name.trim(),
         provider,
-        secret: secret.trim() || undefined, // when editing, omit if blank = keep old
+        secret: secret.trim() || undefined,
       });
     } finally {
       setSaving(false);
@@ -82,56 +78,56 @@ function KeyForm({ initial, onSave, onCancel }) {
   };
 
   return (
-    <div className="p-2 rounded border border-violet-500/30 bg-violet-500/5 space-y-2">
+    <div className="p-2 border border-emerald-500/40 bg-emerald-500/5 space-y-2">
       <div>
-        <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-0.5">Name</label>
+        <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-0.5">NAME</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Personal Gemini"
-          className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-[12px] text-slate-200 outline-none focus:border-violet-500/50"
+          placeholder="e.g. personal-gemini"
+          className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 px-2 py-1 font-mono text-[11px] text-slate-200 placeholder:text-slate-700 outline-none"
         />
       </div>
       <div>
-        <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-0.5">Provider</label>
+        <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-0.5">PROVIDER</label>
         <select
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
           disabled={isEdit}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-[12px] text-slate-200 outline-none focus:border-violet-500/50 disabled:opacity-50"
+          className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 px-2 py-1 font-mono text-[11px] text-slate-200 outline-none disabled:opacity-50"
         >
           {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
-            <option key={id} value={id}>{label}</option>
+            <option key={id} value={id} className="bg-black">{label}</option>
           ))}
         </select>
       </div>
       <div>
-        <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-0.5">
-          Secret {isEdit && <span className="text-slate-600 normal-case">(leave blank to keep existing)</span>}
+        <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-0.5">
+          SECRET {isEdit && <span className="text-slate-700 normal-case tracking-normal">(leave blank to keep existing)</span>}
         </label>
         <input
           type="password"
           value={secret}
           onChange={(e) => setSecret(e.target.value)}
-          placeholder={isEdit ? '••••••••' : 'Paste API key here'}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-[12px] text-slate-200 font-mono outline-none focus:border-violet-500/50"
+          placeholder={isEdit ? '••••••••' : 'paste api key here'}
+          className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 px-2 py-1 font-mono text-[11px] text-slate-200 placeholder:text-slate-700 outline-none"
         />
       </div>
       <div className="flex gap-2">
         <button
           onClick={handleSave}
           disabled={saving || !name.trim() || (!isEdit && !secret.trim())}
-          className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-40"
+          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 font-mono text-[10px] tracking-[0.28em] border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 hover:text-emerald-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? <RiLoader4Line size={11} className="animate-spin" /> : <RiCheckLine size={11} />}
-          {isEdit ? 'Save' : 'Add Key'}
+          {isEdit ? 'SAVE' : 'ADD_KEY'}
         </button>
         <button
           onClick={onCancel}
-          className="px-2 py-1 rounded text-[11px] text-slate-400 hover:bg-zinc-800"
+          className="px-2 py-1 font-mono text-[10px] tracking-[0.28em] text-slate-500 hover:text-emerald-400 transition-colors"
         >
-          Cancel
+          CANCEL
         </button>
       </div>
     </div>
@@ -163,8 +159,8 @@ export default function KeyManager({ keys, activeAssignments, onReload }) {
   return (
     <div className="space-y-1.5">
       {keys.length === 0 && !adding && (
-        <div className="px-2 py-3 text-[11px] text-slate-500 italic text-center bg-zinc-800/30 rounded">
-          No API keys yet — add one below
+        <div className="px-2 py-3 font-mono text-[10px] tracking-wider text-slate-600 text-center border border-zinc-900">
+          // NO API KEYS YET
         </div>
       )}
 
@@ -192,11 +188,11 @@ export default function KeyManager({ keys, activeAssignments, onReload }) {
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-medium
-            bg-zinc-800/50 text-slate-400 border border-zinc-700 border-dashed
-            hover:bg-zinc-800 hover:text-slate-200 hover:border-violet-500/40 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 font-mono text-[10px] tracking-[0.28em]
+            border border-zinc-800 border-dashed text-slate-500
+            hover:bg-emerald-500/5 hover:text-emerald-300 hover:border-emerald-500/40 transition-colors"
         >
-          <RiAddLine size={12} /> Add API Key
+          <RiAddLine size={12} /> ADD_API_KEY
         </button>
       )}
     </div>

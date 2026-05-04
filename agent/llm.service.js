@@ -14,6 +14,7 @@
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatGroq } from '@langchain/groq';
 import { ChatOpenAI } from '@langchain/openai';
+import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import * as log from './logger.js';
 import { checkCall, recordCall, snapshot as rateLimitSnapshot, reset as resetRateLimits } from './rate-limits.js';
@@ -57,10 +58,19 @@ const OPENROUTER_MODELS = [
   { id: 'google/gemma-3-4b-it:free', name: 'Gemma 3 4B (vision, free)', vision: true },
 ];
 
+// Anthropic Claude — all recent models are vision-capable (accept image_url
+// content blocks with base64 data). Listed in descending capability order.
+const CLAUDE_MODELS = [
+  { id: 'claude-opus-4-7',           name: 'Claude Opus 4.7 (vision)',   vision: true },
+  { id: 'claude-sonnet-4-6',         name: 'Claude Sonnet 4.6 (vision)', vision: true },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5 (vision)',  vision: true },
+];
+
 const PROVIDERS = {
   gemini:     { name: 'Google Gemini', models: GEMINI_MODELS,     prefix: 'GEMINI_API_KEY_' },
   groq:       { name: 'Groq',          models: GROQ_MODELS,       prefix: 'GROQ_API_KEY_' },
   openrouter: { name: 'OpenRouter',    models: OPENROUTER_MODELS, prefix: 'OPENROUTER_API_KEY_' },
+  claude:     { name: 'Anthropic Claude', models: CLAUDE_MODELS,  prefix: 'CLAUDE_API_KEY_' },
 };
 
 // ---------- Key discovery & rotation ----------
@@ -255,6 +265,8 @@ function createLLM(provider, model) {
         },
       },
     });
+  } else if (provider === 'claude') {
+    instance = new ChatAnthropic({ apiKey, model, maxRetries: 0 });
   } else {
     throw new Error(`unknown provider: ${provider}`);
   }

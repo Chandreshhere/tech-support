@@ -7,16 +7,18 @@ export default function SidebarSection({ title, action, children, defaultOpen = 
   return (
     <div>
       <div
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-zinc-800/50 select-none"
+        className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-emerald-500/[0.04] select-none"
         onClick={() => setOpen(!open)}
       >
-        <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          {open ? <RiArrowDownSLine size={14} /> : <RiArrowRightSLine size={14} />}
+        <div className="flex items-center gap-1 font-mono text-[10px] tracking-[0.28em] text-slate-500">
+          {open
+            ? <RiArrowDownSLine size={13} className="text-emerald-500/70" />
+            : <RiArrowRightSLine size={13} className="text-emerald-500/70" />}
           {title}
         </div>
         {action && (
           <button
-            className="p-0.5 rounded hover:bg-zinc-700 text-slate-400 hover:text-slate-200"
+            className="p-0.5 text-slate-500 hover:text-emerald-400 transition-colors"
             onClick={(e) => { e.stopPropagation(); action.onClick(); }}
             title={action.title}
           >

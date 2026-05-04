@@ -3,6 +3,7 @@
 // screenshot → verify → repeat until done or stuck.
 
 import crypto from 'node:crypto';
+import os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
@@ -18,7 +19,17 @@ const execFileP = promisify(execFile);
 
 import { invoke, invokeWithVision, HumanMessage, SystemMessage } from './llm.service.js';
 import { queryScreens } from './rag.service.js';
-import { SYSTEM_PROMPT, buildScreenContext, STUCK_HINT, PARSE_RETRY } from './prompts.js';
+import { buildSystemPrompt, buildScreenContext, STUCK_HINT, PARSE_RETRY } from './prompts.js';
+
+// Build the platform-aware system prompt once per module load. Agent needs
+// OS-specific shortcut knowledge injected so it doesn't try Linux shortcuts
+// on macOS (or vice versa). os.release() / os.arch() give the LLM enough
+// detail to derive the right keys for the current machine.
+const SYSTEM_PROMPT = buildSystemPrompt({
+  platform: process.platform,
+  release: os.release(),
+  arch: os.arch(),
+});
 import { annotateScreenshot } from './annotate-screenshot.js';
 import * as log from './logger.js';
 

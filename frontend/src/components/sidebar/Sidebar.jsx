@@ -11,28 +11,28 @@ export default function Sidebar({
   onCloseTab,
   onCreateDoc,
 }) {
-  // Build a name → status map for O(1) lookups
   const statusMap = new Map(screenDocs.map(d => [d.name, d.status]));
 
   return (
-    <div className="h-full flex flex-col bg-[#0f1117] text-slate-300 select-none">
-      <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-zinc-800">
-        Explorer
+    <div className="h-full flex flex-col bg-black text-slate-300 select-none">
+      <div className="px-3 py-2 border-b border-zinc-900 flex items-center gap-2">
+        <span className="text-emerald-400 font-mono text-[10px] tracking-[0.25em]">▸</span>
+        <span className="font-mono text-[10px] tracking-[0.3em] text-slate-400">EXPLORER</span>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         <SidebarSection
-          title="Screen Docs"
+          title="SCREEN_DOCS"
           defaultOpen={true}
           action={{
-            icon: <RiAddLine size={14} />,
+            icon: <RiAddLine size={13} />,
             title: 'New screen doc',
             onClick: onCreateDoc,
           }}
         >
           {screenDocs.length === 0 ? (
-            <div className="px-4 py-2 text-[12px] text-slate-600 italic">
-              No screen docs yet
+            <div className="px-4 py-2 font-mono text-[10px] tracking-wider text-slate-700">
+              // NO SCREEN DOCS
             </div>
           ) : (
             screenDocs.map((doc) => (
@@ -49,11 +49,11 @@ export default function Sidebar({
         </SidebarSection>
       </div>
 
-      <div className="border-t border-zinc-800 max-h-[40%] shrink-0 overflow-y-auto">
-        <SidebarSection title="Open Files" defaultOpen={true}>
+      <div className="border-t border-zinc-900 max-h-[40%] shrink-0 overflow-y-auto">
+        <SidebarSection title="OPEN_FILES" defaultOpen={true}>
           {openTabs.length === 0 ? (
-            <div className="px-4 py-2 text-[12px] text-slate-600 italic">
-              No files open
+            <div className="px-4 py-2 font-mono text-[10px] tracking-wider text-slate-700">
+              // NO FILES OPEN
             </div>
           ) : (
             openTabs.map((name) => (

@@ -5,6 +5,27 @@ import {
   RiRefreshLine, RiLoader4Line, RiArrowLeftLine,
 } from 'react-icons/ri';
 
+function ToolBtn({ icon, label, onClick, tone = 'default', disabled, title, loading }) {
+  const toneCls = {
+    default:  'text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/5',
+    accent:   'text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 border border-emerald-500/40',
+    warn:     'text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/40',
+    danger:   'text-slate-500 hover:text-red-400 hover:bg-red-500/10',
+    muted:    'text-slate-500 hover:text-slate-200 hover:bg-zinc-800/60',
+  }[tone];
+  return (
+    <button
+      onClick={disabled || loading ? undefined : onClick}
+      disabled={disabled || loading}
+      title={title}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 font-mono text-[10px] tracking-[0.25em] transition-colors ${toneCls} disabled:opacity-40 disabled:cursor-wait`}
+    >
+      {loading ? <RiLoader4Line size={12} className="animate-spin" /> : icon}
+      {label && <span>{label}</span>}
+    </button>
+  );
+}
+
 export default function Toolbar({
   activeDoc,
   mode,
@@ -22,100 +43,80 @@ export default function Toolbar({
   onOpenLlm,
 }) {
   return (
-    <div className="h-11 flex items-center justify-between px-4 bg-zinc-900 border-b border-zinc-800 shrink-0">
-      {/* Left: back button + breadcrumb */}
-      <div className="flex items-center gap-2 text-[13px] min-w-0">
+    <div className="h-10 flex items-center justify-between px-4 bg-black border-b border-zinc-900 shrink-0">
+      {/* Left: breadcrumb */}
+      <div className="flex items-center gap-2 font-mono text-[11px] min-w-0">
         <Link
-          to="/"
-          className="flex items-center gap-1 px-2 py-1 rounded text-slate-500 hover:bg-zinc-800 hover:text-slate-200 text-[12px]"
-          title="Back to contexts"
+          to="/dashboard"
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-slate-500 hover:text-emerald-400 transition-colors tracking-[0.25em] text-[10px]"
+          title="Back to dashboard"
         >
-          <RiArrowLeftLine size={13} /> Contexts
+          <RiArrowLeftLine size={11} /> PROJECTS
         </Link>
-        <span className="text-slate-700">/</span>
+        <span className="text-slate-800">/</span>
         {contextName && (
-          <span className="px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/25 text-violet-300 text-[11px] font-medium truncate" title={contextSlug}>
-            {contextName}
+          <span
+            className="px-2 py-0.5 border border-emerald-500/30 bg-emerald-500/5 text-emerald-300 text-[10px] tracking-[0.18em] truncate"
+            title={contextSlug}
+          >
+            {contextName.toUpperCase()}
           </span>
         )}
         {activeDoc && (
           <>
-            <span className="text-slate-700">/</span>
-            <span className="text-slate-400 truncate">{activeDoc}.screen.md</span>
+            <span className="text-slate-800">/</span>
+            <span className="text-slate-400 truncate tracking-wider">{activeDoc}.screen.md</span>
           </>
         )}
       </div>
 
-      {/* Right: actions + menu */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {/* Contextual actions */}
+      {/* Right: actions */}
+      <div className="flex items-center gap-1 shrink-0">
         {activeDoc && mode === 'view' && (
-          <button
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] text-slate-400 hover:bg-zinc-800 hover:text-slate-200 transition-colors"
-            onClick={onEdit}
-            title="Edit"
-          >
-            <RiEditLine size={13} /> Edit
-          </button>
+          <ToolBtn icon={<RiEditLine size={12} />} label="EDIT" onClick={onEdit} title="Edit" />
         )}
 
         {activeDoc && mode === 'edit' && (
           <>
-            <button
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+            <ToolBtn
+              icon={<RiSaveLine size={12} />}
+              label="SAVE"
               onClick={onSave}
+              tone="accent"
               title="Save"
-            >
-              <RiSaveLine size={13} /> Save
-            </button>
-            <button
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] text-slate-400 hover:bg-zinc-800 hover:text-slate-200 transition-colors"
+            />
+            <ToolBtn
+              icon={<RiCloseLine size={12} />}
+              label="CANCEL"
               onClick={onCancel}
+              tone="muted"
               title="Cancel editing"
-            >
-              <RiCloseLine size={13} /> Cancel
-            </button>
+            />
           </>
         )}
 
         {activeDoc && mode !== 'metadata' && (
-          <button
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] text-slate-400 hover:bg-zinc-800 hover:text-violet-300 transition-colors"
-            onClick={onInfo}
-            title="Metadata info"
-          >
-            <RiInformationLine size={13} /> Info
-          </button>
+          <ToolBtn icon={<RiInformationLine size={12} />} label="INFO" onClick={onInfo} title="Metadata info" />
         )}
 
         {activeDoc && mode === 'metadata' && (
-          <button
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] text-slate-400 hover:bg-zinc-800 hover:text-slate-200 transition-colors"
-            onClick={onCancel}
-            title="Close metadata"
-          >
-            <RiCloseLine size={13} /> Close
-          </button>
+          <ToolBtn icon={<RiCloseLine size={12} />} label="CLOSE" onClick={onCancel} tone="muted" title="Close metadata" />
         )}
 
         {activeDoc && (
-          <button
-            className="flex items-center gap-1.5 px-2 py-1 rounded text-[12px] text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-            onClick={onDelete}
-            title="Delete"
-          >
-            <RiDeleteBinLine size={13} />
-          </button>
+          <ToolBtn icon={<RiDeleteBinLine size={12} />} onClick={onDelete} tone="danger" title="Delete" />
         )}
 
-        {/* Re-index button — shows count badge when there are pending files */}
+        <div className="w-px h-4 bg-zinc-800 mx-1" />
+
+        {/* Re-index (sync) */}
         <button
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-medium border transition-colors
+          className={`inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[10px] tracking-[0.25em] border transition-colors
             ${isIngesting
-              ? 'bg-zinc-800 text-slate-400 border-zinc-700 cursor-wait'
+              ? 'border-zinc-800 text-slate-500 cursor-wait'
               : pendingCount > 0
-                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50'
-                : 'bg-transparent text-slate-500 border-zinc-700 hover:bg-zinc-800 hover:text-slate-300'}`}
+                ? 'border-amber-500/40 text-amber-300 hover:bg-amber-500/10 hover:border-amber-400'
+                : 'border-zinc-800 text-slate-500 hover:text-emerald-300 hover:border-emerald-500/40'}`}
           onClick={isIngesting ? undefined : onIngest}
           disabled={isIngesting}
           title={
@@ -125,38 +126,35 @@ export default function Toolbar({
           }
         >
           {isIngesting
-            ? <RiLoader4Line size={14} className="animate-spin" />
-            : <RiRefreshLine size={14} />
+            ? <RiLoader4Line size={12} className="animate-spin" />
+            : <RiRefreshLine size={12} />
           }
-          <span>Sync</span>
+          <span>SYNC</span>
           {pendingCount > 0 && !isIngesting && (
-            <span className="ml-0.5 px-1.5 py-[1px] text-[10px] font-bold rounded bg-amber-500/30 text-amber-200">
+            <span className="ml-0.5 px-1 py-[1px] text-[9px] font-bold bg-amber-500/30 text-amber-200">
               {pendingCount}
             </span>
           )}
         </button>
 
-        {/* New button */}
+        {/* New doc */}
         <button
-          className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-medium
-            bg-violet-600/15 text-violet-300 border border-violet-500/25
-            hover:bg-violet-600/25 hover:border-violet-500/40 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[10px] tracking-[0.25em] border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 transition-colors"
           onClick={onNew}
           title="New screen doc"
         >
-          <RiAddLine size={14} /> New
+          <RiAddLine size={12} /> NEW
         </button>
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-zinc-700 mx-1" />
+        <div className="w-px h-4 bg-zinc-800 mx-1" />
 
-        {/* Hamburger menu — opens LLM config drawer */}
+        {/* Config drawer */}
         <button
-          className="p-1.5 rounded hover:bg-zinc-800 text-slate-400 hover:text-slate-200 transition-colors"
+          className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors"
           onClick={onOpenLlm}
           title="Settings"
         >
-          <RiMenuLine size={18} />
+          <RiMenuLine size={16} />
         </button>
       </div>
     </div>

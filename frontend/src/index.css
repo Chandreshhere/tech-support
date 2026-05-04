@@ -37,3 +37,11 @@ body {
 .animate-fade-in {
   animation: fade-in 0.15s ease-out;
 }
+
+@keyframes cta-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.animate-cta-blink {
+  animation: cta-blink 1s step-end infinite;
+}

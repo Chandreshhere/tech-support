@@ -440,8 +440,8 @@ export default function WorkspacePage() {
   // Show loading spinner while the context is being validated
   if (contextLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#0f1117] text-slate-500 text-sm">
-        Loading context...
+      <div className="h-screen flex items-center justify-center bg-black font-mono text-[11px] tracking-[0.28em] text-slate-500">
+        LOADING_CONTEXT…
       </div>
     );
   }
@@ -454,33 +454,37 @@ export default function WorkspacePage() {
   } else if (state.mode === 'create') {
     contentArea = (
       <div className="flex-1 flex flex-col p-6 gap-3">
-        <div className="text-sm font-medium text-slate-300">Create New Screen Doc</div>
+        <div className="flex items-center gap-3 font-mono mb-1">
+          <span className="text-emerald-400 text-[10px] tracking-[0.28em]">▸</span>
+          <span className="text-slate-300 text-[11px] tracking-[0.28em]">NEW_SCREEN_DOC</span>
+          <span className="flex-1 h-px bg-zinc-900" />
+        </div>
         <input
           type="text"
-          placeholder="Screen name (e.g. notification-settings)"
-          className="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/50"
+          placeholder="screen name (e.g. notification-settings)"
+          className="bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 outline-none font-mono text-[12px] text-slate-200 placeholder:text-slate-700 px-3 py-2"
           value={state.createDraft.name}
           onChange={(e) => dispatch({ type: 'UPDATE_CREATE_DRAFT', fields: { name: e.target.value } })}
         />
         <textarea
-          placeholder="Describe the screen layout..."
-          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 font-mono resize-none outline-none focus:border-violet-500/50"
+          placeholder="describe the screen layout..."
+          className="flex-1 bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 outline-none font-mono text-[13px] text-slate-300 placeholder:text-slate-700 p-3 resize-none"
           value={state.createDraft.content}
           onChange={(e) => dispatch({ type: 'UPDATE_CREATE_DRAFT', fields: { content: e.target.value } })}
         />
         <div className="flex gap-2">
           <button
-            className="px-4 py-1.5 rounded text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40"
+            className="inline-flex items-center gap-2 px-4 py-2 font-mono text-[11px] tracking-[0.28em] border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             disabled={!state.createDraft.name.trim()}
             onClick={() => handleCreate(state.createDraft.name.trim(), state.createDraft.content || `# ${state.createDraft.name.trim()}\n\n`)}
           >
-            Create
+            CREATE
           </button>
           <button
-            className="px-4 py-1.5 rounded text-sm text-slate-400 hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 font-mono text-[10px] tracking-[0.28em] text-slate-500 hover:text-emerald-400 transition-colors"
             onClick={() => dispatch({ type: 'CANCEL_MODE' })}
           >
-            Cancel
+            CANCEL
           </button>
         </div>
       </div>
@@ -493,14 +497,22 @@ export default function WorkspacePage() {
     contentArea = <DocViewer name={state.activeDoc} content={state.docContents[state.activeDoc]} />;
   } else {
     contentArea = (
-      <div className="flex-1 flex items-center justify-center text-slate-600 text-sm">
-        Select a screen doc from the sidebar
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-600">
+        <pre className="font-mono text-emerald-500/40 text-[10px] leading-tight mb-4 select-none">
+{`  ┌──────────────────────────────┐
+  │  > idle ........... [ WAIT ] │
+  │  > select screen .. [ NEED ] │
+  └──────────────────────────────┘`}
+        </pre>
+        <span className="font-mono text-[10px] tracking-[0.28em] text-slate-600">
+          SELECT A SCREEN DOC FROM THE SIDEBAR
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#0f1117]">
+    <div className="h-screen flex flex-col bg-black">
       <Toolbar
         activeDoc={state.activeDoc}
         mode={state.mode}
@@ -531,7 +543,7 @@ export default function WorkspacePage() {
           />
         </Panel>
 
-        <Separator className="w-px bg-zinc-800 hover:bg-violet-600 transition-colors data-[resize-handle-active]:bg-violet-600" />
+        <Separator className="w-px bg-zinc-900 hover:bg-emerald-500 transition-colors data-[resize-handle-active]:bg-emerald-500" />
 
         <Panel id="main" defaultSize="82">
           <Group orientation="vertical" className="h-full">
@@ -548,7 +560,7 @@ export default function WorkspacePage() {
               </div>
             </Panel>
 
-            <Separator className="h-px bg-zinc-800 hover:bg-violet-600 transition-colors data-[resize-handle-active]:bg-violet-600" />
+            <Separator className="h-px bg-zinc-900 hover:bg-emerald-500 transition-colors data-[resize-handle-active]:bg-emerald-500" />
 
             <Panel id="prompt" defaultSize="30" minSize="140px" maxSize="50">
               <PromptPanel

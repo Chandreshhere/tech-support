@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
-  RiCloseLine, RiInformationLine, RiStickyNoteLine,
+  RiCloseLine, RiStickyNoteLine,
   RiCheckLine, RiLoader4Line,
 } from 'react-icons/ri';
 
 const STATUS_LABELS = {
-  'indexed':     { label: 'Indexed', color: 'text-emerald-400 bg-emerald-500/10' },
-  'stale':       { label: 'Stale',   color: 'text-amber-400 bg-amber-500/10' },
-  'not-indexed': { label: 'Not indexed', color: 'text-slate-400 bg-slate-500/10' },
-  'unknown':     { label: 'Unknown', color: 'text-slate-500 bg-zinc-800' },
+  'indexed':     { label: 'INDEXED',     color: 'text-emerald-400' },
+  'stale':       { label: 'STALE',       color: 'text-amber-400' },
+  'not-indexed': { label: 'NOT_INDEXED', color: 'text-slate-400' },
+  'unknown':     { label: 'UNKNOWN',     color: 'text-slate-500' },
 };
 
 function formatDate(ts) {
@@ -26,10 +26,29 @@ function formatBytes(bytes) {
 
 function Row({ label, value, mono = false }) {
   return (
-    <div className="flex items-start gap-3 py-1.5">
-      <span className="text-[11px] text-slate-500 w-28 shrink-0 uppercase tracking-wider">{label}</span>
-      <span className={`text-[12px] text-slate-300 break-all ${mono ? 'font-mono' : ''}`}>{value}</span>
+    <div className="flex items-start gap-3 py-1">
+      <span className="font-mono text-[9px] text-slate-500 w-28 shrink-0 tracking-[0.25em]">{label}</span>
+      <span className={`text-[11px] text-slate-300 break-all ${mono ? 'font-mono' : 'font-mono'}`}>{value}</span>
     </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <section className="mb-5">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-emerald-400 font-mono text-[9px]">▸</span>
+        <span className="font-mono text-[10px] tracking-[0.28em] text-slate-400">{title}</span>
+        <span className="flex-1 h-px bg-zinc-900" />
+      </div>
+      <div className="border border-zinc-800 bg-black px-4 py-3 relative">
+        <div className="absolute top-0 left-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none">┌</div>
+        <div className="absolute top-0 right-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none">┐</div>
+        <div className="absolute bottom-0 left-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none">└</div>
+        <div className="absolute bottom-0 right-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none">┘</div>
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -67,108 +86,100 @@ export default function MetadataPanel({ docName, cApi, onClose }) {
   const dirty = meta && notes !== (meta.customNotes || '');
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#0f1117]">
+    <div className="flex-1 overflow-y-auto bg-black">
       <div className="max-w-3xl mx-auto p-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-800 mb-4">
-          <div className="flex items-center gap-2">
-            <RiInformationLine size={18} className="text-violet-400" />
-            <h2 className="text-[15px] font-medium text-slate-200">
-              {docName}.screen.md
-            </h2>
+        <div className="flex items-center justify-between pb-4 border-b border-zinc-900 mb-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-emerald-400 font-mono text-[11px]">▸</span>
+            <span className="font-mono text-[10px] tracking-[0.28em] text-slate-500">META</span>
+            <span className="text-slate-700">::</span>
+            <span className="font-mono text-[13px] text-slate-200 truncate">{docName}.screen.md</span>
             {meta && (
-              <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${statusInfo.color}`}>
+              <span className={`ml-1 px-2 py-[1px] border border-current/30 font-mono text-[9px] tracking-[0.25em] ${statusInfo.color}`}>
                 {statusInfo.label}
               </span>
             )}
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-zinc-800 text-slate-400 hover:text-slate-200">
+          <button onClick={onClose} className="p-1 text-slate-500 hover:text-emerald-400 transition-colors">
             <RiCloseLine size={16} />
           </button>
         </div>
 
         {loading ? (
-          <div className="text-slate-500 text-sm py-8 text-center">Loading metadata...</div>
+          <div className="font-mono text-[11px] tracking-[0.28em] text-slate-500 py-8 text-center">
+            <RiLoader4Line size={13} className="inline animate-spin mr-2" /> LOADING_META…
+          </div>
         ) : !meta ? (
-          <div className="text-slate-500 text-sm py-8 text-center">Failed to load metadata</div>
+          <div className="font-mono text-[11px] tracking-[0.28em] text-red-400 py-8 text-center">
+            FAILED TO LOAD METADATA
+          </div>
         ) : (
           <>
-            {/* File info */}
-            <section className="mb-6">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                File Information
-              </h3>
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3">
-                <Row label="Name" value={`${meta.name}.screen.md`} mono />
-                <Row label="Path" value={meta.filePath} mono />
-                <Row label="Size" value={formatBytes(meta.size)} />
-                <Row label="Created (FS)" value={formatDate(meta.birthtime)} />
-                <Row label="Modified (FS)" value={formatDate(meta.mtime)} />
-                <Row label="Created (DB)" value={formatDate(meta.createdAt)} />
-                <Row label="Updated (DB)" value={formatDate(meta.updatedAt)} />
-              </div>
-            </section>
+            <Section title="FILE_INFORMATION">
+              <Row label="NAME"         value={`${meta.name}.screen.md`} mono />
+              <Row label="PATH"         value={meta.filePath} mono />
+              <Row label="SIZE"         value={formatBytes(meta.size)} />
+              <Row label="CREATED_FS"   value={formatDate(meta.birthtime)} />
+              <Row label="MODIFIED_FS"  value={formatDate(meta.mtime)} />
+              <Row label="CREATED_DB"   value={formatDate(meta.createdAt)} />
+              <Row label="UPDATED_DB"   value={formatDate(meta.updatedAt)} />
+            </Section>
 
-            {/* Index info */}
-            <section className="mb-6">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                ChromaDB Index
-              </h3>
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3">
-                <Row label="Status" value={
-                  <span className={statusInfo.color.split(' ')[0]}>{statusInfo.label}</span>
-                } />
-                <Row label="Indexed at" value={formatDate(meta.indexedAt)} />
-                <Row label="File hash" value={meta.fileHash || '—'} mono />
-                <Row label="Indexed hash" value={meta.indexedHash || '—'} mono />
-                {meta.status === 'stale' && (
-                  <div className="mt-2 px-3 py-2 rounded bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300">
-                    File was edited after last indexing. Re-index to sync ChromaDB with current content.
-                  </div>
-                )}
-                {meta.status === 'not-indexed' && (
-                  <div className="mt-2 px-3 py-2 rounded bg-slate-500/10 border border-slate-500/20 text-[11px] text-slate-400">
-                    This file has never been indexed. Run Re-index from the settings drawer.
-                  </div>
-                )}
-              </div>
-            </section>
+            <Section title="CHROMADB_INDEX">
+              <Row label="STATUS"       value={<span className={statusInfo.color}>{statusInfo.label}</span>} />
+              <Row label="INDEXED_AT"   value={formatDate(meta.indexedAt)} />
+              <Row label="FILE_HASH"    value={meta.fileHash || '—'} mono />
+              <Row label="INDEXED_HASH" value={meta.indexedHash || '—'} mono />
+              {meta.status === 'stale' && (
+                <div className="mt-2 px-3 py-2 border border-amber-500/30 bg-amber-500/5 font-mono text-[10px] text-amber-300 leading-relaxed tracking-wider">
+                  FILE WAS EDITED AFTER LAST INDEXING. RE-INDEX TO SYNC CHROMADB WITH CURRENT CONTENT.
+                </div>
+              )}
+              {meta.status === 'not-indexed' && (
+                <div className="mt-2 px-3 py-2 border border-emerald-500/25 bg-emerald-500/5 font-mono text-[10px] text-emerald-300 leading-relaxed tracking-wider">
+                  NEVER INDEXED. RUN RE-INDEX FROM THE CONFIG DRAWER.
+                </div>
+              )}
+            </Section>
 
-            {/* Custom notes */}
             <section className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <RiStickyNoteLine size={12} />
-                  Custom Metadata Notes
-                </h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-400 font-mono text-[9px]">▸</span>
+                  <span className="font-mono text-[10px] tracking-[0.28em] text-slate-400 flex items-center gap-1.5">
+                    <RiStickyNoteLine size={12} /> CUSTOM_NOTES
+                  </span>
+                </div>
                 <div className="flex items-center gap-2">
                   {savedAt && (
-                    <span className="text-[11px] text-emerald-400 flex items-center gap-1 animate-fade-in">
-                      <RiCheckLine size={12} /> Saved
+                    <span className="font-mono text-[10px] tracking-[0.25em] text-emerald-400 flex items-center gap-1 animate-fade-in">
+                      <RiCheckLine size={11} /> SAVED
                     </span>
                   )}
                   <button
                     onClick={handleSaveNotes}
                     disabled={!dirty || saving}
-                    className={`px-3 py-1 rounded text-[11px] font-medium transition-colors
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[10px] tracking-[0.28em] border transition-colors
                       ${dirty && !saving
-                        ? 'bg-violet-600 hover:bg-violet-500 text-white'
-                        : 'bg-zinc-800 text-slate-600 cursor-not-allowed'}`}
+                        ? 'border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 hover:text-emerald-200'
+                        : 'border-zinc-800 text-slate-700 cursor-not-allowed'}`}
                   >
-                    {saving ? <RiLoader4Line size={12} className="animate-spin" /> : 'Save Notes'}
+                    {saving ? <RiLoader4Line size={11} className="animate-spin" /> : null}
+                    SAVE_NOTES
                   </button>
                 </div>
               </div>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add custom notes about this screen doc. These will be included as metadata alongside the vector embedding in ChromaDB."
-                className="w-full min-h-[140px] bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2
-                  text-[13px] text-slate-300 font-mono resize-y outline-none focus:border-violet-500/50
-                  placeholder:text-slate-600"
+                placeholder="// add custom notes about this screen doc. attached as metadata on next re-index."
+                className="w-full min-h-[140px] bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 px-3 py-2
+                  font-mono text-[12px] text-slate-300 resize-y outline-none transition-colors
+                  placeholder:text-slate-700 caret-emerald-400"
               />
-              <p className="text-[10px] text-slate-600 mt-1.5">
-                Notes are stored locally and will be attached to the ChromaDB document metadata on next re-index.
+              <p className="font-mono text-[9px] tracking-wider text-slate-600 mt-1.5">
+                STORED LOCALLY · ATTACHED TO CHROMADB METADATA ON NEXT RE-INDEX
               </p>
             </section>
           </>

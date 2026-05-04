@@ -1,11 +1,11 @@
 import { RiMarkdownLine, RiCloseLine } from 'react-icons/ri';
 
-// VS Code git-style color coding on the filename itself — no badges, no dots.
+// Git-style colouring on the filename itself — no badges, no dots.
 // All state details surface on hover via the tooltip.
 //
-//   indexed      → normal slate  (clean state)
-//   stale        → amber         (VS Code "M" modified color)
-//   not-indexed  → green         (VS Code "U" untracked color)
+//   indexed      → normal slate  (clean)
+//   stale        → amber         (VS Code "M" modified)
+//   not-indexed  → emerald       (VS Code "U" untracked)
 
 const FILENAME_COLOR = {
   'indexed':     { inactive: 'text-slate-400',   active: 'text-slate-100' },
@@ -36,22 +36,23 @@ export default function ScreenDocItem({ name, active, dirty, status, onSelect, o
 
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-1 cursor-pointer text-[13px] group
+      className={`flex items-center gap-2 px-3 py-1 cursor-pointer font-mono text-[12px] group
         ${active
-          ? 'bg-zinc-800 border-l-2 border-violet-500'
-          : 'hover:bg-zinc-800/40 border-l-2 border-transparent'
+          ? 'bg-emerald-500/10 border-l-2 border-emerald-400'
+          : 'hover:bg-emerald-500/[0.04] border-l-2 border-transparent'
         }`}
       onClick={() => onSelect(name)}
       title={buildTooltip(name, status, dirty)}
     >
-      <RiMarkdownLine size={14} className={`shrink-0 ${iconColor}`} />
+      <RiMarkdownLine size={13} className={`shrink-0 ${iconColor}`} />
       <span className={`truncate flex-1 ${active ? color.active : color.inactive}`}>
         {name}.screen.md
       </span>
+      {dirty && <span className="w-1.5 h-1.5 bg-amber-400 shrink-0" title="Unsaved changes" />}
 
       {onClose && (
         <button
-          className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-600 text-slate-500 hover:text-slate-200"
+          className="p-0.5 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-emerald-400 transition-colors"
           onClick={(e) => { e.stopPropagation(); onClose(name); }}
         >
           <RiCloseLine size={12} />

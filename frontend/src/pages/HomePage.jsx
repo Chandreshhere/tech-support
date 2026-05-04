@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  RiAddLine, RiFolderLine, RiMoreLine, RiSettingsLine,
-  RiDeleteBinLine, RiPencilLine, RiCloseLine, RiLoader4Line,
+  RiAddLine, RiMoreLine, RiDeleteBinLine, RiPencilLine,
+  RiCloseLine, RiLoader4Line, RiArrowRightLine, RiSearchLine,
+  RiArrowLeftLine,
 } from 'react-icons/ri';
 import { listContexts, createContext, updateContext, deleteContext } from '../services/api.js';
+import GlitchText from '../components/landing/GlitchText.jsx';
 
 function formatRelativeTime(ts) {
-  if (!ts) return '';
+  if (!ts) return '—';
   const diff = Date.now() - ts;
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'just now';
@@ -18,15 +20,98 @@ function formatRelativeTime(ts) {
   return `${d}d ago`;
 }
 
+function slugify(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+
+// Render a 10-cell ASCII progress bar.
+function AsciiBar({ pct }) {
+  const filled = Math.max(0, Math.min(10, Math.round(pct / 10)));
+  return (
+    <span className="font-mono tracking-tight">
+      <span className="text-emerald-500/40">[</span>
+      <span className="text-emerald-400">{'█'.repeat(filled)}</span>
+      <span className="text-zinc-800">{'░'.repeat(10 - filled)}</span>
+      <span className="text-emerald-500/40">]</span>
+    </span>
+  );
+}
+
 function ErrorBanner({ error }) {
   if (!error) return null;
   return (
-    <div className="px-3 py-2 rounded bg-red-500/10 border border-red-500/30 text-[12px] text-red-300">
-      <div className="font-medium">{error.message}</div>
-      {error.suggestion && <div className="text-red-300/80 mt-0.5">{error.suggestion}</div>}
+    <div className="px-3 py-2 border border-red-500/40 bg-red-500/5 font-mono text-[11px] text-red-300 tracking-wider">
+      <div>! {error.message}</div>
+      {error.suggestion && <div className="text-red-400/70 mt-0.5">→ {error.suggestion}</div>}
     </div>
   );
 }
+
+// --- Shared bordered frame (same look as onboarding) ---------------------
+function Frame({ title, subtitle, children, footer, onClose, width = 'w-[520px]' }) {
+  return (
+    <div className={`${width} max-w-[92vw] border border-emerald-500/30 bg-black/85 backdrop-blur-sm shadow-[0_0_40px_rgba(16,185,129,0.08)]`}>
+      <div className="flex items-center justify-between border-b border-emerald-500/20 px-5 py-3">
+        <div className="flex items-center gap-3 font-mono">
+          <span className="text-emerald-400 text-[10px] tracking-[0.28em]">▸</span>
+          <span className="text-slate-300 text-[11px] tracking-[0.28em]">{title}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {subtitle && (
+            <span className="font-mono text-[10px] tracking-[0.25em] text-slate-500">{subtitle}</span>
+          )}
+          {onClose && (
+            <button onClick={onClose} className="text-slate-500 hover:text-emerald-400 transition-colors">
+              <RiCloseLine size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="px-6 py-6">{children}</div>
+      {footer && (
+        <div className="border-t border-emerald-500/20 px-5 py-3 flex items-center justify-between gap-3">
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PrimaryBtn({ children, onClick, disabled, loading, icon }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="inline-flex items-center gap-2 px-4 py-2 font-mono text-[11px] tracking-[0.28em] border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 hover:text-emerald-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+    >
+      {loading ? <RiLoader4Line size={13} className="animate-spin" /> : icon}
+      <GlitchText text={typeof children === 'string' ? children : ''} active={hover} />
+    </button>
+  );
+}
+
+function GhostBtn({ children, onClick, icon }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-2 px-3 py-2 font-mono text-[10px] tracking-[0.28em] text-slate-500 hover:text-emerald-400 transition-colors"
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+// --- Modals --------------------------------------------------------------
 
 function CreateModal({ open, onClose, onCreate }) {
   const [name, setName] = useState('');
@@ -55,71 +140,54 @@ function CreateModal({ open, onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center animate-fade-in" onClick={onClose}>
-      <div
-        className="bg-zinc-900 border border-zinc-700 rounded-xl w-[480px] max-w-[90vw] shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
-          <span className="text-sm font-medium text-slate-200">New Software Context</span>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
-            <RiCloseLine size={18} />
-          </button>
-        </div>
-        <div className="p-5 space-y-4">
-          <ErrorBanner error={error} />
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setError(null); }}
-              autoFocus
-              placeholder="e.g. Discord, Slack, Figma"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/50"
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreate(); } }}
-            />
-            <p className="text-[10px] text-slate-600 mt-1">
-              Must be unique. A URL-safe slug will be auto-generated (e.g. "My Discord" → "my-discord")
-            </p>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center animate-fade-in" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}>
+        <Frame
+          title="PROJECT/SPAWN"
+          subtitle="NEW CONTEXT"
+          onClose={onClose}
+          footer={
+            <>
+              <GhostBtn onClick={onClose}>CANCEL</GhostBtn>
+              <PrimaryBtn onClick={handleCreate} disabled={!name.trim()} loading={saving} icon={<RiAddLine size={13} />}>
+                SPAWN
+              </PrimaryBtn>
+            </>
+          }
+        >
+          {error && <div className="mb-4"><ErrorBanner error={error} /></div>}
+          <div className="space-y-3">
+            <div>
+              <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-1">NAME</label>
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => { setName(e.target.value); setError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreate(); } }}
+                placeholder="e.g. discord, figma, local-term"
+                className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 outline-none font-mono text-[12px] text-slate-200 placeholder:text-slate-700 px-3 py-2"
+              />
+              <p className="font-mono text-[9px] text-slate-600 mt-1 tracking-wider">
+                Must be unique · slug auto-generated · internal id handles storage
+              </p>
+            </div>
+            <div>
+              <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-1">
+                DESCRIPTION <span className="text-slate-700">// optional</span>
+              </label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What will the agent do here?"
+                className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 outline-none font-mono text-[12px] text-slate-200 placeholder:text-slate-700 px-3 py-2 resize-none"
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-1">Description (optional)</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this context for?"
-              rows={2}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/50 resize-none"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-zinc-800">
-          <button onClick={onClose} className="px-4 py-1.5 rounded text-sm text-slate-400 hover:bg-zinc-800">
-            Cancel
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={!name.trim() || saving}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-40"
-          >
-            {saving ? <RiLoader4Line size={14} className="animate-spin" /> : <RiAddLine size={14} />}
-            Create
-          </button>
-        </div>
+        </Frame>
       </div>
     </div>
   );
-}
-
-function slugify(s) {
-  return String(s || '')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40);
 }
 
 function RenameModal({ ctx, onClose, onSaved }) {
@@ -135,7 +203,6 @@ function RenameModal({ ctx, onClose, onSaved }) {
   const handleNameChange = (v) => {
     setName(v);
     setError(null);
-    // Auto-update slug unless user explicitly edited it
     if (!slugManuallyEdited) setSlug(slugify(v));
   };
 
@@ -151,7 +218,6 @@ function RenameModal({ ctx, onClose, onSaved }) {
     setError(null);
     try {
       const payload = { name: name.trim(), description: description.trim() };
-      // Only send slug if user changed it from what the server generated
       if (slug !== ctx.slug) payload.slug = slug;
       const { data } = await updateContext(ctx.id, payload);
       onSaved(data);
@@ -166,115 +232,139 @@ function RenameModal({ ctx, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center animate-fade-in" onClick={onClose}>
-      <div
-        className="bg-zinc-900 border border-zinc-700 rounded-xl w-[480px] max-w-[90vw] shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
-          <span className="text-sm font-medium text-slate-200">Edit Context</span>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
-            <RiCloseLine size={18} />
-          </button>
-        </div>
-        <div className="p-5 space-y-4">
-          <ErrorBanner error={error} />
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              autoFocus
-              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/50"
-            />
-            <p className="text-[10px] text-slate-600 mt-1">Must be unique (case-insensitive).</p>
-          </div>
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-1">Slug (URL)</label>
-            <div className="flex items-center gap-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 focus-within:border-violet-500/50">
-              <span className="text-slate-600 text-sm font-mono">/c/</span>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center animate-fade-in" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}>
+        <Frame
+          title="PROJECT/EDIT"
+          subtitle={`ID ${ctx.id.slice(0, 8)}`}
+          onClose={onClose}
+          footer={
+            <>
+              <GhostBtn onClick={onClose}>CANCEL</GhostBtn>
+              <PrimaryBtn onClick={handleSave} disabled={!name.trim() || !slug} loading={saving}>
+                SAVE
+              </PrimaryBtn>
+            </>
+          }
+        >
+          {error && <div className="mb-4"><ErrorBanner error={error} /></div>}
+          <div className="space-y-3">
+            <div>
+              <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-1">NAME</label>
               <input
-                type="text"
-                value={slug}
-                onChange={(e) => handleSlugChange(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-slate-200 font-mono outline-none"
+                autoFocus
+                value={name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 outline-none font-mono text-[12px] text-slate-200 px-3 py-2"
+              />
+              <p className="font-mono text-[9px] text-slate-600 mt-1 tracking-wider">
+                Must be unique (case-insensitive)
+              </p>
+            </div>
+            <div>
+              <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-1">SLUG (URL)</label>
+              <div className="flex items-stretch border border-emerald-500/30 hover:border-emerald-500/60 focus-within:border-emerald-400 transition-colors">
+                <span className="px-3 py-2 bg-emerald-500/5 font-mono text-[12px] text-emerald-400/70 tracking-wider select-none">/c/</span>
+                <input
+                  value={slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  className="flex-1 bg-black font-mono text-[12px] text-slate-200 px-3 py-2 outline-none"
+                />
+              </div>
+              <p className="font-mono text-[9px] text-slate-600 mt-1 tracking-wider">
+                URL only · storage uses internal id <span className="text-slate-500">{ctx.id.slice(0, 8)}…</span>
+              </p>
+            </div>
+            <div>
+              <label className="block font-mono text-[9px] text-slate-500 tracking-[0.25em] mb-1">DESCRIPTION</label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full bg-black border border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-400 outline-none font-mono text-[12px] text-slate-200 px-3 py-2 resize-none"
               />
             </div>
-            <p className="text-[10px] text-slate-600 mt-1">
-              Changes the URL only. Physical storage (folder + ChromaDB) uses the internal id —
-              <span className="font-mono"> {ctx.id.slice(0, 8)}…</span> — and is unaffected.
-            </p>
           </div>
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-1">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/50 resize-none"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-zinc-800">
-          <button onClick={onClose} className="px-4 py-1.5 rounded text-sm text-slate-400 hover:bg-zinc-800">Cancel</button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim() || !slug || saving}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-40"
-          >
-            {saving ? <RiLoader4Line size={14} className="animate-spin" /> : null} Save
-          </button>
-        </div>
+        </Frame>
       </div>
     </div>
   );
 }
 
+// --- Context card --------------------------------------------------------
+
 function ContextCard({ ctx, onRename, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hover, setHover] = useState(false);
   const pct = ctx.total > 0 ? Math.round((ctx.indexed / ctx.total) * 100) : 0;
   const pending = ctx.total - ctx.indexed;
 
   return (
-    <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/5 transition-all">
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="group relative border border-zinc-800 bg-black/50 hover:border-emerald-500/50 hover:bg-emerald-500/[0.02] transition-colors"
+    >
+      {/* corner glyphs — match landing FeatureCard */}
+      <div className="absolute top-0 left-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none group-hover:text-emerald-400 transition-colors">┌</div>
+      <div className="absolute top-0 right-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none group-hover:text-emerald-400 transition-colors">┐</div>
+      <div className="absolute bottom-0 left-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none group-hover:text-emerald-400 transition-colors">└</div>
+      <div className="absolute bottom-0 right-0 text-emerald-500/40 font-mono text-[10px] leading-none select-none group-hover:text-emerald-400 transition-colors">┘</div>
+
       <Link to={`/c/${ctx.slug}`} className="block p-5">
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 w-10 h-10 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center">
-            <RiFolderLine size={18} className="text-violet-400" />
-          </div>
+        {/* title row */}
+        <div className="flex items-start gap-2 mb-3">
+          <span className="font-mono text-emerald-400 text-[11px] leading-tight mt-0.5">▸</span>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-slate-100 truncate" title={ctx.name}>{ctx.name}</h3>
-            <p className="text-[11px] text-slate-500 font-mono">{ctx.slug}</p>
+            <h3 className="font-mono text-slate-100 text-[14px] tracking-[0.08em] truncate" title={ctx.name}>
+              <GlitchText text={ctx.name.toUpperCase()} active={hover} />
+            </h3>
+            <p className="font-mono text-[10px] text-slate-500 tracking-wider mt-0.5">/c/{ctx.slug}</p>
           </div>
         </div>
-        {ctx.description && (
-          <p className="text-[12px] text-slate-400 mt-3 line-clamp-2">{ctx.description}</p>
+
+        {/* description */}
+        {ctx.description ? (
+          <p className="font-mono text-[11px] text-slate-400 leading-relaxed line-clamp-2 mb-4">
+            {ctx.description}
+          </p>
+        ) : (
+          <p className="font-mono text-[10px] text-slate-700 tracking-widest mb-4">// NO DESCRIPTION</p>
         )}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-zinc-800">
-          <div className="flex items-center gap-3 text-[11px]">
-            <span className="text-slate-400">
-              <span className="text-slate-200 font-medium">{ctx.total}</span> screen{ctx.total !== 1 ? 's' : ''}
-            </span>
-            <span className={pending > 0 ? 'text-amber-400' : 'text-emerald-400'}>
-              {pending > 0 ? `${pending} pending` : 'all indexed'}
+
+        {/* stats block */}
+        <div className="border-t border-zinc-900 pt-3 space-y-1.5">
+          <div className="flex items-center justify-between font-mono text-[10px]">
+            <span className="text-slate-600 tracking-[0.25em]">SCREENS</span>
+            <span className="text-slate-200 tracking-wider">
+              <span className="text-emerald-400">{ctx.total}</span>
             </span>
           </div>
-          <span className="text-[10px] text-slate-600">{formatRelativeTime(ctx.updated_at)}</span>
+          <div className="flex items-center justify-between font-mono text-[10px]">
+            <span className="text-slate-600 tracking-[0.25em]">INDEX</span>
+            <div className="flex items-center gap-2">
+              <AsciiBar pct={pct} />
+              <span className={pending > 0 ? 'text-amber-400 tracking-wider' : 'text-emerald-400 tracking-wider'}>
+                {ctx.total === 0 ? 'EMPTY' : pending > 0 ? `${pct}%` : 'SYNC'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between font-mono text-[10px]">
+            <span className="text-slate-600 tracking-[0.25em]">UPDATED</span>
+            <span className="text-slate-500">{formatRelativeTime(ctx.updated_at)}</span>
+          </div>
         </div>
-        {/* Index progress bar */}
-        {ctx.total > 0 && (
-          <div className="mt-2 h-1 rounded-full bg-zinc-800 overflow-hidden">
-            <div
-              className={`h-full ${pct === 100 ? 'bg-emerald-500' : 'bg-violet-500'} transition-all`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        )}
+
+        {/* enter cue — only visible on hover */}
+        <div className="mt-3 pt-2 border-t border-zinc-900/80 flex items-center justify-end gap-1 font-mono text-[10px] tracking-[0.28em] text-slate-700 group-hover:text-emerald-400 transition-colors">
+          <span>ENTER</span>
+          <RiArrowRightLine size={11} className="group-hover:translate-x-0.5 transition-transform" />
+        </div>
       </Link>
-      {/* Menu button */}
+
+      {/* menu (rename / delete) */}
       <button
-        className="absolute top-3 right-3 p-1.5 rounded opacity-0 group-hover:opacity-100 text-slate-500 hover:bg-zinc-800 hover:text-slate-200 transition-opacity"
+        className="absolute top-2 right-2 p-1 text-slate-600 hover:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(!menuOpen); }}
       >
         <RiMoreLine size={14} />
@@ -282,18 +372,18 @@ function ContextCard({ ctx, onRename, onDelete }) {
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={(e) => { e.preventDefault(); setMenuOpen(false); }} />
-          <div className="absolute top-10 right-3 z-20 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl py-1 min-w-[140px]">
+          <div className="absolute top-8 right-2 z-20 bg-black border border-emerald-500/40 py-1 min-w-[140px] shadow-[0_0_20px_rgba(16,185,129,0.15)]">
             <button
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-slate-300 hover:bg-zinc-700"
+              className="w-full flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[0.25em] text-slate-300 hover:bg-emerald-500/10 hover:text-emerald-300 transition-colors"
               onClick={(e) => { e.preventDefault(); setMenuOpen(false); onRename(ctx); }}
             >
-              <RiPencilLine size={12} /> Rename
+              <RiPencilLine size={11} /> RENAME
             </button>
             <button
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-red-400 hover:bg-red-500/10"
+              className="w-full flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[0.25em] text-red-400 hover:bg-red-500/10 transition-colors"
               onClick={(e) => { e.preventDefault(); setMenuOpen(false); onDelete(ctx); }}
             >
-              <RiDeleteBinLine size={12} /> Delete
+              <RiDeleteBinLine size={11} /> DELETE
             </button>
           </div>
         </>
@@ -301,6 +391,8 @@ function ContextCard({ ctx, onRename, onDelete }) {
     </div>
   );
 }
+
+// --- Page ----------------------------------------------------------------
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -329,7 +421,7 @@ export default function HomePage() {
   };
 
   const handleDelete = async (ctx) => {
-    if (!confirm(`Delete context "${ctx.name}"?\n\nThis removes ${ctx.total} screen doc(s), the folder contexts/${ctx.slug}/, and the ChromaDB collection. Cannot be undone.`)) return;
+    if (!confirm(`DELETE "${ctx.name}"?\n\nThis removes ${ctx.total} screen doc(s), the folder contexts/${ctx.slug}/, and the ChromaDB collection. Cannot be undone.`)) return;
     try {
       await deleteContext(ctx.id);
       refresh();
@@ -344,76 +436,142 @@ export default function HomePage() {
     c.slug.includes(search.toLowerCase())
   );
 
-  return (
-    <div className="min-h-screen bg-[#0f1117] flex flex-col">
-      {/* Header */}
-      <div className="border-b border-zinc-800 bg-zinc-900">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-violet-400">kraken-assist</h1>
-            <p className="text-[11px] text-slate-500">Software contexts — each app has its own screen docs + vector index</p>
-          </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition-colors"
-          >
-            <RiAddLine size={16} /> New Context
-          </button>
-        </div>
-      </div>
+  const totalScreens = contexts.reduce((n, c) => n + (c.total || 0), 0);
+  const totalIndexed = contexts.reduce((n, c) => n + (c.indexed || 0), 0);
 
-      {/* Content */}
-      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-20 text-slate-500">
-            <RiLoader4Line size={20} className="animate-spin" />
-          </div>
-        ) : contexts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full bg-violet-600/10 border border-violet-500/30 flex items-center justify-center mb-4">
-              <RiFolderLine size={32} className="text-violet-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-slate-200 mb-1">No software contexts yet</h2>
-            <p className="text-sm text-slate-500 mb-6 max-w-sm">
-              A context holds all the screen documentation for one app (Discord, Slack, etc.) along with its own vector index.
-            </p>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+  return (
+    <div className="min-h-screen bg-black text-slate-200">
+      <div className="flex flex-col min-h-screen">
+        {/* ===== HEADER ===== */}
+        <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-zinc-900">
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="font-mono text-[15px] tracking-[0.1em] text-slate-200 hover:text-emerald-300 transition-colors"
             >
-              <RiAddLine size={16} /> Create your first context
-            </button>
+              kraken<span className="text-emerald-400">.assist</span>
+            </Link>
+            <span className="hidden sm:inline-block px-1.5 py-[2px] border border-emerald-500/30 text-emerald-400 text-[9px] font-mono tracking-[0.25em]">
+              DASHBOARD
+            </span>
           </div>
-        ) : (
-          <>
-            {contexts.length > 3 && (
+
+          <div className="hidden md:flex items-center gap-6 font-mono text-[10px] tracking-[0.25em]">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">CTX</span>
+              <span className="text-slate-700">::</span>
+              <span className="text-emerald-400">{contexts.length.toString().padStart(2, '0')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">SCREENS</span>
+              <span className="text-slate-700">::</span>
+              <span className="text-emerald-400">{totalScreens}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">INDEXED</span>
+              <span className="text-slate-700">::</span>
+              <span className="text-emerald-400">{totalIndexed}/{totalScreens || 0}</span>
+            </div>
+          </div>
+
+          <PrimaryBtn onClick={() => setShowCreate(true)} icon={<RiAddLine size={13} />}>
+            NEW_PROJECT
+          </PrimaryBtn>
+        </header>
+
+        {/* ===== CONTENT ===== */}
+        <main className="flex-1 max-w-6xl mx-auto w-full px-6 md:px-10 py-10">
+          {/* Section header */}
+          <div className="flex items-center gap-4 mb-6">
+            <span className="font-mono text-[10px] tracking-[0.3em] text-emerald-400">[ 0x00 ]</span>
+            <span className="font-mono text-[12px] tracking-[0.28em] text-slate-300">PROJECTS</span>
+            <span className="flex-1 h-px bg-zinc-900" />
+            <span className="font-mono text-[9px] tracking-[0.3em] text-slate-600">
+              {filtered.length} / {contexts.length}
+            </span>
+          </div>
+
+          {/* Search — only when there's enough to bother */}
+          {contexts.length > 3 && (
+            <div className="mb-6 flex items-stretch border border-zinc-800 hover:border-emerald-500/40 focus-within:border-emerald-400 transition-colors max-w-md">
+              <span className="px-3 flex items-center text-emerald-500/60">
+                <RiSearchLine size={13} />
+              </span>
               <input
-                type="text"
-                placeholder="Search contexts..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full max-w-md bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/50 mb-6"
+                placeholder="QUERY_PROJECTS..."
+                className="flex-1 bg-transparent font-mono text-[11px] tracking-[0.2em] text-slate-200 placeholder:text-slate-700 py-2 pr-3 outline-none"
               />
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((ctx) => (
-                <ContextCard
-                  key={ctx.id}
-                  ctx={ctx}
-                  onRename={setRenaming}
-                  onDelete={handleDelete}
-                />
-              ))}
             </div>
-            {filtered.length === 0 && (
-              <p className="text-sm text-slate-500 text-center py-8">No contexts match "{search}"</p>
-            )}
-          </>
-        )}
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-24 font-mono text-[11px] text-slate-500 tracking-[0.28em]">
+              <RiLoader4Line size={14} className="animate-spin mr-2" /> LOADING_PROJECTS…
+            </div>
+          ) : contexts.length === 0 ? (
+            <EmptyState onCreate={() => setShowCreate(true)} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map(ctx => (
+                  <ContextCard
+                    key={ctx.id}
+                    ctx={ctx}
+                    onRename={setRenaming}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+              {filtered.length === 0 && (
+                <div className="py-12 text-center font-mono text-[11px] text-slate-600 tracking-[0.25em]">
+                  NO MATCH FOR &quot;{search}&quot;
+                </div>
+              )}
+            </>
+          )}
+        </main>
+
+        {/* ===== FOOTER ===== */}
+        <footer className="border-t border-zinc-900 px-6 md:px-10 py-4 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.28em] text-slate-600 hover:text-emerald-400 transition-colors"
+          >
+            <RiArrowLeftLine size={11} /> BACK_TO_LANDING
+          </Link>
+          <span className="font-mono text-[9px] tracking-[0.3em] text-slate-700">
+            SESSION · LOCAL · NO TELEMETRY
+          </span>
+        </footer>
       </div>
 
       <CreateModal open={showCreate} onClose={() => setShowCreate(false)} onCreate={handleCreate} />
       <RenameModal ctx={renaming} onClose={() => setRenaming(null)} onSaved={() => { setRenaming(null); refresh(); }} />
+    </div>
+  );
+}
+
+function EmptyState({ onCreate }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16">
+      <pre className="font-mono text-emerald-400 text-[11px] leading-tight select-none mb-6 opacity-80">
+{`  ╔══════════════════════════════╗
+  ║  > projects ........ [ 0 ]   ║
+  ║  > status .......... [ IDLE ]║
+  ║  > awaiting spawn .. [ YES ] ║
+  ╚══════════════════════════════╝`}
+      </pre>
+      <h2 className="font-mono text-slate-100 text-[16px] tracking-[0.12em] mb-2">
+        NO PROJECTS YET.
+      </h2>
+      <p className="font-mono text-[11px] text-slate-500 leading-relaxed text-center max-w-md mb-6">
+        A project groups screen docs + vector index for <em>one</em> piece of software the agent will operate.
+      </p>
+      <PrimaryBtn onClick={onCreate} icon={<RiAddLine size={13} />}>
+        SPAWN_FIRST_PROJECT
+      </PrimaryBtn>
     </div>
   );
 }
